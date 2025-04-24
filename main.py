@@ -239,8 +239,8 @@ def main():
             sweeps = st.slider("Number of Sweeps", 10, 5000, 1000)
             
             # Warning for large problems
-            if n_cities > 20:
-                st.warning(f"Quantum methods may be inefficient for problems with more than 20 cities. Current size: {n_cities} cities.")
+            if n_cities_uk > 20:
+                st.warning(f"Quantum methods may be inefficient for problems with more than 20 cities. Current size: {n_cities_uk} cities.")
             
             params = {
                 "num_reads": num_reads,
@@ -252,18 +252,18 @@ def main():
     
     
     
-    # if generate_cities_button:
-    #         gb_map.generate_uk_map(n_cities_uk)
-    #         st.session_state.map_html = gb_map.display_map()
-    #         html(st.session_state.map_html, height=600, width=450)
+    if generate_cities_button:
+            gb_map.generate_uk_map(n_cities_uk)
+            st.session_state.map_html = gb_map.display_map()
+            html(st.session_state.map_html, height=600, width=450)
             
-    #         sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
-    #         distance_matrix = create_distance_matrix_from_coords(sampled_df)
+            sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
+            distance_matrix = create_distance_matrix_from_coords(sampled_df)
             
-    #         st.session_state.distance_matrix = distance_matrix
-    #         st.session_state.points = sampled_df
-    #         st.success(f"Loaded {n_cities_uk} cities from UK dataset")
-    #         st.session_state.results = {}
+            st.session_state.distance_matrix = distance_matrix
+            st.session_state.points = sampled_df
+            st.success(f"Loaded {n_cities_uk} cities from UK dataset")
+            st.session_state.results = {}
 
     
     
@@ -284,18 +284,18 @@ def main():
         # ax.grid(True)
         # st.pyplot(fig)
                 
-        if generate_cities_button:
-            gb_map.generate_uk_map(n_cities_uk)
-            st.session_state.map_html = gb_map.display_map()
-            html(st.session_state.map_html, height=600, width=450)
+        # if generate_cities_button:
+        #     gb_map.generate_uk_map(n_cities_uk)
+        #     st.session_state.map_html = gb_map.display_map()
+        #     html(st.session_state.map_html, height=600, width=450)
             
-            sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
-            distance_matrix = create_distance_matrix_from_coords(sampled_df)
+        #     sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
+        #     distance_matrix = create_distance_matrix_from_coords(sampled_df)
             
-            st.session_state.distance_matrix = distance_matrix
-            st.session_state.points = sampled_df
-            st.success(f"Loaded {n_cities_uk} cities from UK dataset")
-            st.session_state.results = {}
+        #     st.session_state.distance_matrix = distance_matrix
+        #     st.session_state.points = sampled_df
+        #     st.success(f"Loaded {n_cities_uk} cities from UK dataset")
+        #     st.session_state.results = {}
 
         
         if simulation_button:
@@ -304,6 +304,8 @@ def main():
                 step=5,
                 repeats=1
             )
+            perf_fig = sim.plot_performance()
+            st.pyplot(perf_fig)
         
         # Run the selected algorithm if button is clicked
         if run_button:

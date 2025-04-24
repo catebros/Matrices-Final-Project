@@ -8,7 +8,7 @@ import os
 from Algorithms.GeneticHeuristic import measure_execution_time as genetic_tsp
 from Algorithms.NNHeuristic import measure_execution_time as nn_tsp
 from Algorithms.BruteFroce import measure_execution_time as bf_tsp
-from Algorithms.Hybrid import measure_execution_time as hybrid_tsp
+from Algorithms.tsp_solver import measure_execution_time as hybrid_tsp
 
 
 class TestResult:
@@ -99,34 +99,32 @@ class Simulation:
 
         return self.results
 
-    def plot_performance(self) -> None:
+    def plot_performance(self):
         """
-        Plots execution time vs. number of cities for each algorithm.
+        Plots execution time vs. number of cities for each algorithm,
+        and returns the Matplotlib Figure.
         """
-        # Organize results into a DataFrame
         import pandas as pd
+        import matplotlib.pyplot as plt
 
+        # build dataframe
         df = pd.DataFrame([
-            {
-                'Algorithm': res.algorithm_name,
-                'Cities': res.number_of_cities,
-                'Time': res.time_taken
-            }
+            {'Algorithm': res.algorithm_name,
+             'Cities': res.number_of_cities,
+             'Time': res.time_taken}
             for res in self.results
         ])
-
-        # Pivot for plotting
         pivot = df.pivot(index='Cities', columns='Algorithm', values='Time')
 
-        # Plot
-        plt.figure(figsize=(10, 6))
+        # create figure
+        fig, ax = plt.subplots(figsize=(10, 6))
         for algo in pivot.columns:
-            plt.plot(pivot.index, pivot[algo], marker='o', label=algo)
-
-        plt.xlabel('Number of Cities')
-        plt.ylabel('Execution Time (s)')
-        plt.title('TSP Algorithm Performance vs. Problem Size')
-        plt.legend()
-        plt.grid(True)
+            ax.plot(pivot.index, pivot[algo], marker='o', label=algo)
+        ax.set_xlabel('Number of Cities')
+        ax.set_ylabel('Execution Time (s)')
+        ax.set_title('TSP Algorithm Performance vs. Problem Size')
+        ax.legend()
+        ax.grid(True)
         plt.tight_layout()
-        plt.show()
+
+        return fig
