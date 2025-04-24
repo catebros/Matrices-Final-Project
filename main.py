@@ -18,6 +18,7 @@ from Algorithms.Hybrid import measure_execution_time as hybrid_tsp
 
 # Display imports
 from data.map import GreatBritainMap
+from data.simulation import Simulation
 
 # Set page configuration
 st.set_page_config(page_title="TSP Solver", layout="wide", initial_sidebar_state="expanded")
@@ -165,6 +166,8 @@ def main():
     st.title("Traveling Salesman Problem Solver")
     
     gb_map = GreatBritainMap()
+    sim = Simulation(city_df=gb_map.get_dataset())
+
     # map_html = gb_map.display_map()
 
     # html(map_html, height=600, width=450)
@@ -195,7 +198,8 @@ def main():
         # Sample Increase
         st.subheader("Algorithm Sample Increase")  
         st.text("Running the simulation will test the algorithm with sample sizes from 1 to 50, showing how its behavior changes as the sample size increases linearly.")
-        if st.button("Run Simulation"):
+        simulation_button = st.button("Run Simulation")
+        if simulation_button:
             pass
         
         # Algorithm-specific parameters
@@ -242,6 +246,20 @@ def main():
     
     
     
+    # if generate_cities_button:
+    #         gb_map.generate_uk_map(n_cities_uk)
+    #         st.session_state.map_html = gb_map.display_map()
+    #         html(st.session_state.map_html, height=600, width=450)
+            
+    #         sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
+    #         distance_matrix = create_distance_matrix_from_coords(sampled_df)
+            
+    #         st.session_state.distance_matrix = distance_matrix
+    #         st.session_state.points = sampled_df
+    #         st.success(f"Loaded {n_cities_uk} cities from UK dataset")
+    #         st.session_state.results = {}
+
+    
     
     # Main area - display results
     if hasattr(st.session_state, 'distance_matrix') and hasattr(st.session_state, 'points'):
@@ -273,6 +291,13 @@ def main():
             st.success(f"Loaded {n_cities_uk} cities from UK dataset")
             st.session_state.results = {}
 
+        
+        if simulation_button:
+            sim.run_all(
+                max_cities=max_uk_cities,
+                step=5,
+                repeats=1
+            )
         
         # Run the selected algorithm if button is clicked
         if run_button:
