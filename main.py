@@ -10,7 +10,7 @@ import seaborn as sns
 from Algorithms.GeneticHeuristic import measure_execution_time as genetic_tsp
 from Algorithms.NNHeuristic import measure_execution_time as nn_tsp
 from Algorithms.BruteFroce import measure_execution_time as bf_tsp
-from Algorithms.Hybrid import measure_execution_time as hybrid_tsp
+from Algorithms.tsp_solver import qubo_to_ising_workflow
 
 # Set page configuration
 st.set_page_config(page_title="TSP Solver", layout="wide", initial_sidebar_state="expanded")
@@ -163,7 +163,7 @@ def main():
         st.subheader("Select Algorithm")
         algorithm = st.selectbox(
             "Algorithm",
-            ["Genetic Algorithm", "Nearest Neighbor", "Brute Force", "Hybrid"]
+            ["Genetic Algorithm", "Nearest Neighbor", "Brute Force", "QUBO→Ising"]
         )
         
         # Algorithm-specific parameters
@@ -197,12 +197,18 @@ def main():
             
             params = {}
             
-        elif algorithm == "Hybrid":
-            st.subheader("Hybrid Parameters")
-            use_quantum = st.checkbox("Use Quantum Computing for Small Clusters", value=True)
+        elif algorithm == "QUBO→Ising":
+            st.subheader("Quantum Parameters")
+            num_reads = st.slider("Number of Reads", 10, 5000, 1000)
+            sweeps = st.slider("Number of Sweeps", 10, 5000, 1000)
+            
+            # Warning for large problems
+            if n_cities > 20:
+                st.warning(f"Quantum methods may be inefficient for problems with more than 20 cities. Current size: {n_cities} cities.")
             
             params = {
-                "use_quantum": use_quantum
+                "num_reads": num_reads,
+                "sweeps": sweeps
             }
         
         # Run algorithm button
@@ -281,37 +287,37 @@ def main():
                         "n_cities": len(points),
                         "params": params
                     }
-                    
-                elif algorithm == "Hybrid":
-                    status_text.text("Running Hybrid Algorithm...")
-                    try:
-                        route, distance, execution_time, visualization = hybrid_tsp(
-                            distance_matrix, coordinates=points, **params
-                        )
-                        
-                        # Check that route is not None before storing the results
-                        if route is None:
-                            route = list(range(len(distance_matrix)))  # Create a default route
-                            distance = float('inf')
-                            st.warning("Hybrid algorithm returned an invalid route. Using default route instead.")
-                        
-                        # Store results
-                        st.session_state.results[algorithm] = {
-                            "route": route,
-                            "distance": distance,
-                            "time": execution_time,
-                            "visualization": visualization if visualization is not None else None,
-                            "n_cities": len(points),
-                            "params": params
-                        }
-                    except TypeError as e:
-                        # Provide a more descriptive error message
-                        st.error(f"Error in hybrid algorithm: {str(e)}. Try with a smaller number of cities.")
-                        return  # Exit the function to handle the error gracefully
                 
+                elif algorithm == "QUBO→Ising":
+                    status_text.text("Running QUBO→Ising workflow...")
+                    result = qubo_to_ising_workflow(
+                        distance_matrix, coordinates=points, **params
+                    )
+                    
+                    # Store results
+                    st.session_state.results[algorithm] = {
+                        "route": result['route'],
+                        "distance": result['cost'],
+                        "time": result['time'],
+                        "visualization": result['visualization'],
+                        "n_cities": len(points),
+                        "params": params
+                    }
+                
+                # Update progress and show completion message
                 progress_bar.progress(100)
+                
+                # Update with the correct execution time based on the algorithm
+                if algorithm == "QUBO→Ising":
+                    execution_time = result['time']
+                
                 status_text.text(f"Algorithm completed in {execution_time:.4f} seconds!")
-                st.success(f"Found route with distance: {distance:.2f}")
+                
+                # Show success message with the appropriate distance
+                if algorithm == "QUBO→Ising":
+                    st.success(f"Found route with distance: {result['cost']:.2f}")
+                else:
+                    st.success(f"Found route with distance: {distance:.2f}")
                 
             except Exception as e:
                 st.error(f"Error running algorithm: {str(e)}")
@@ -332,11 +338,14 @@ def main():
                     
                     # Display route visualization
                     if "route" in result and "distance" in result:
-                        route_fig = plot_route(
-                            st.session_state.points, result["route"], result["distance"],
-                            title=f"Best Route found by {algo_name}"
-                        )
-                        st.pyplot(route_fig)
+                        if "visualization" in result and result["visualization"] is not None:
+                            st.pyplot(result["visualization"])
+                        else:
+                            route_fig = plot_route(
+                                st.session_state.points, result["route"], result["distance"],
+                                title=f"Best Route found by {algo_name}"
+                            )
+                            st.pyplot(route_fig)
                         
                         # Display route as list
                         st.write(f"Route: {result['route']}")
@@ -351,12 +360,6 @@ def main():
                             title=f"Convergence History - {algo_name}"
                         )
                         st.pyplot(hist_fig)
-                    
-                    # Special visualization for hybrid results
-                    if algo_name == "Hybrid" and "visualization" in result:
-                        st.subheader("Cluster Visualization")
-                        hybrid_fig = result["visualization"]
-                        st.pyplot(hybrid_fig)
             
             # Comparison tab
             with tabs[-1]:
@@ -372,7 +375,7 @@ def main():
                 comp_fig = compare_algorithms(st.session_state.results)
                 st.pyplot(comp_fig)
                 
-                st.write("""
+                st.write("""                
                 ### Analysis Notes
                 - **Distance**: Lower is better - indicates more optimal route
                 - **Time**: Lower is better - indicates faster computation
