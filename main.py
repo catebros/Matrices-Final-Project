@@ -17,8 +17,8 @@ from Algorithms.BruteFroce import measure_execution_time as bf_tsp
 from Algorithms.tsp_solver import qubo_to_ising_workflow
 
 # Display imports
-from data.map import GreatBritainMap
-from data.simulation import Simulation
+from Data.map import GreatBritainMap
+from Data.simulation import Simulation
 
 # Set page configuration
 st.set_page_config(page_title="TSP Solver", layout="wide", initial_sidebar_state="expanded")

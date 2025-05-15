@@ -12,7 +12,7 @@ class QUBOToIsingTSPSolver:
     
     def __init__(self, distance_matrix):
         """
-        Initialize the QUBO to Ising TSP solver.
+        Initialize the QUBO to Ising TSP solver
         Args: distance_matrix: Distance matrix between cities
         """
         self.distance_matrix = distance_matrix
@@ -22,7 +22,7 @@ class QUBOToIsingTSPSolver:
     
     def create_qubo_tsp(self, penalty=None):
         """
-        Create a QUBO model for the TSP problem.
+        Create a QUBO model for the TSP problem
         Args: penalty: Optional penalty factor     
         Returns: Dictionary representing the QUBO matrix Q
         """
@@ -225,7 +225,7 @@ class QUBOToIsingTSPSolver:
         
         return fig
 
-# other functions to maintain compatibility with existing code
+# other functions to maintain compatibility with existing code, not part of the class, not directly used
 
 def create_qubo_tsp(distances, penalty=None):
     # create a QUBO model for the TSP problem.
@@ -295,7 +295,6 @@ def measure_execution_time(distances, coordinates=None, method='qubo_to_ising', 
     
     return route, distance, execution_time, visualization
 
-# example
 if __name__ == "__main__":
     print("Example of TSP solved with the QUBO→Ising workflow")
     
