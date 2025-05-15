@@ -35,7 +35,7 @@ class QUBOToIsingTSPSolver:
         
         Q = {}
 
-        # each city is visited once (time slot constraints)
+        # each city is visited once 
         for i in range(N):
             for t in range(N):
                 Q[(i * N + t, i * N + t)] = -penalty
