@@ -5,6 +5,10 @@ import streamlit as st
 from matplotlib.animation import FuncAnimation
 import pandas as pd
 import seaborn as sns
+from streamlit.components.v1 import html
+import streamlit.components.v1 as components
+import math
+
 
 # Import algorithm modules (updated to reflect the new location)
 from Algorithms.GeneticHeuristic import measure_execution_time as genetic_tsp
@@ -12,8 +16,33 @@ from Algorithms.NNHeuristic import measure_execution_time as nn_tsp
 from Algorithms.BruteFroce import measure_execution_time as bf_tsp
 from Algorithms.tsp_solver import qubo_to_ising_workflow
 
+# Display imports
+from data.map import GreatBritainMap
+from data.simulation import Simulation
+
 # Set page configuration
 st.set_page_config(page_title="TSP Solver", layout="wide", initial_sidebar_state="expanded")
+
+def create_distance_matrix_from_coords(coords):
+    """
+    coords: array-like of shape (n,2) with (latitude, longitude).
+    Returns symmetric matrix of great-circle distances in kilometers.
+    """
+    n = len(coords)
+    D = np.zeros((n, n))
+    R = 6371.0  # Earth radius in km
+    for i in range(n):
+        lat1, lon1 = coords[i]
+        phi1, lam1 = math.radians(lat1), math.radians(lon1)
+        for j in range(i+1, n):
+            lat2, lon2 = coords[j]
+            phi2, lam2 = math.radians(lat2), math.radians(lon2)
+            dphi = phi2 - phi1
+            dlam = lam2 - lam1
+            a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlam/2)**2
+            d = 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            D[i, j] = D[j, i] = d
+    return D
 
 def create_random_distance_matrix(n_cities, seed=None):
     """Create a random symmetric distance matrix for testing."""
@@ -136,6 +165,13 @@ def main():
     """Main function to run the Streamlit app."""
     st.title("Traveling Salesman Problem Solver")
     
+    gb_map = GreatBritainMap()
+    sim = Simulation(city_df=gb_map.get_dataset())
+
+    # map_html = gb_map.display_map()
+
+    # html(map_html, height=600, width=450)
+    
     # Initialize session state for storing results
     if "results" not in st.session_state:
         st.session_state.results = {}
@@ -144,20 +180,13 @@ def main():
     with st.sidebar:
         st.header("Algorithm Settings")
         
-        # Problem settings
-        st.subheader("Problem Settings")
-        n_cities = st.slider("Number of Cities", min_value=5, max_value=50, value=10)
-        random_seed = st.number_input("Random Seed", value=42, help="Seed for reproducibility")
+        st.subheader("UK Cities Problem")
+        full_uk_df = gb_map.get_dataset()
+        max_uk_cities = len(full_uk_df)
+        n_cities_uk = st.slider("Number of UK Cities to test on", min_value=5, max_value=max_uk_cities, value=10)
         
-        # Create/load distance matrix
-        if st.button("Generate Random Problem"):
-            st.session_state.distance_matrix, st.session_state.points = create_random_distance_matrix(
-                n_cities, seed=random_seed
-            )
-            st.success(f"Generated random problem with {n_cities} cities")
-            
-            # Clear previous results when generating a new problem
-            st.session_state.results = {}
+        generate_cities_button = st.button("Generate UK Problem")
+          
         
         # Algorithm selection
         st.subheader("Select Algorithm")
@@ -165,6 +194,13 @@ def main():
             "Algorithm",
             ["Genetic Algorithm", "Nearest Neighbor", "Brute Force", "QUBO→Ising"]
         )
+        
+        # Sample Increase
+        st.subheader("Algorithm Sample Increase")  
+        st.text("Running the simulation will test the algorithm with sample sizes from 1 to 50, showing how its behavior changes as the sample size increases linearly.")
+        simulation_button = st.button("Run Simulation")
+        if simulation_button:
+            pass
         
         # Algorithm-specific parameters
         if algorithm == "Genetic Algorithm":
@@ -192,8 +228,8 @@ def main():
             st.write("Brute Force uses exact algorithm with no parameters to tune.")
             
             # Warn about problem size
-            if n_cities > 10:
-                st.warning(f"Warning: Brute Force approach is infeasible for problems with more than 10 cities. Current size: {n_cities} cities.")
+            if n_cities_uk > 10:
+                st.warning(f"Warning: Brute Force approach is infeasible for problems with more than 10 cities. Current size: {n_cities_uk} cities.")
             
             params = {}
             
@@ -203,8 +239,8 @@ def main():
             sweeps = st.slider("Number of Sweeps", 10, 5000, 1000)
             
             # Warning for large problems
-            if n_cities > 20:
-                st.warning(f"Quantum methods may be inefficient for problems with more than 20 cities. Current size: {n_cities} cities.")
+            if n_cities_uk > 20:
+                st.warning(f"Quantum methods may be inefficient for problems with more than 20 cities. Current size: {n_cities_uk} cities.")
             
             params = {
                 "num_reads": num_reads,
@@ -214,6 +250,23 @@ def main():
         # Run algorithm button
         run_button = st.button("Run Algorithm")
     
+    
+    
+    if generate_cities_button:
+            gb_map.generate_uk_map(n_cities_uk)
+            st.session_state.map_html = gb_map.display_map()
+            html(st.session_state.map_html, height=600, width=450)
+            
+            sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
+            distance_matrix = create_distance_matrix_from_coords(sampled_df)
+            
+            st.session_state.distance_matrix = distance_matrix
+            st.session_state.points = sampled_df
+            st.success(f"Loaded {n_cities_uk} cities from UK dataset")
+            st.session_state.results = {}
+
+    
+    
     # Main area - display results
     if hasattr(st.session_state, 'distance_matrix') and hasattr(st.session_state, 'points'):
         # Display current problem
@@ -221,18 +274,43 @@ def main():
         st.write(f"Number of Cities: {len(st.session_state.points)}")
         
         # Visualization of city positions
-        fig, ax = plt.subplots(figsize=(8, 8))
-        ax.scatter(st.session_state.points[:, 0], st.session_state.points[:, 1], s=100)
-        for i, (x, y) in enumerate(st.session_state.points):
-            ax.annotate(f"{i}", (x, y), fontsize=12)
-        ax.set_title("City Positions")
-        ax.set_xlabel("X Coordinate")
-        ax.set_ylabel("Y Coordinate")
-        ax.grid(True)
-        st.pyplot(fig)
+        # fig, ax = plt.subplots(figsize=(8, 8))
+        # ax.scatter(st.session_state.points[:, 0], st.session_state.points[:, 1], s=100)
+        # for i, (x, y) in enumerate(st.session_state.points):
+        #     ax.annotate(f"{i}", (x, y), fontsize=12)
+        # ax.set_title("City Positions")
+        # ax.set_xlabel("X Coordinate")
+        # ax.set_ylabel("Y Coordinate")
+        # ax.grid(True)
+        # st.pyplot(fig)
+                
+        # if generate_cities_button:
+        #     gb_map.generate_uk_map(n_cities_uk)
+        #     st.session_state.map_html = gb_map.display_map()
+        #     html(st.session_state.map_html, height=600, width=450)
+            
+        #     sampled_df = gb_map.get_dataset()[["Latitude", "Longitude"]].to_numpy()
+        #     distance_matrix = create_distance_matrix_from_coords(sampled_df)
+            
+        #     st.session_state.distance_matrix = distance_matrix
+        #     st.session_state.points = sampled_df
+        #     st.success(f"Loaded {n_cities_uk} cities from UK dataset")
+        #     st.session_state.results = {}
+
+        
+        if simulation_button:
+            sim.run_all(
+                max_cities=max_uk_cities,
+                step=5,
+                repeats=1
+            )
+            perf_fig = sim.plot_performance()
+            st.pyplot(perf_fig)
         
         # Run the selected algorithm if button is clicked
         if run_button:
+            html(st.session_state.map_html, height=600, width=450)
+                
             st.subheader(f"Running {algorithm}...")
             progress_bar = st.progress(0)
             status_text = st.empty()
@@ -325,7 +403,7 @@ def main():
                 import traceback
                 st.error(f"Error details: {traceback.format_exc()}")
         
-        # Display results if available
+        # Display results if available 
         if st.session_state.results:
             st.header("Algorithm Results")
             
