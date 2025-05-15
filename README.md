@@ -3,7 +3,6 @@
 This project implements and compares different algorithms to solve the Traveling Salesman Problem (TSP).
 
 ## Implemented Algorithms
-
 1. **Genetic Algorithm** - An evolutionary technique that generates solutions through selection, crossover, and mutation operators.
 3. **Nearest Neighbor** - A greedy algorithm that always moves to the closest unvisited city.
 4. **Brute Force** - Tests all possible permutations to find the optimal solution.
@@ -70,4 +69,4 @@ streamlit run main.py
   - `GeneticHeuristic.py` - Genetic algorithm implementation
   - `NNHeuristic.py` - Nearest Neighbor implementation
   - `BruteFroce.py` - Brute Force implementation
-  - `Hybrid.py` - Hybrid Quantum-Classical implementation
+  - `tsp_solver.py` - Quantum Annealing + QUBO Approach
