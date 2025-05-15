@@ -180,12 +180,12 @@ class QUBOToIsingTSPSolver:
         end_time = time.time()
         execution_time = end_time - start_time
         
-        print(f"\n--- Result of the QUBO→Ising process ---")
+        print(f"\n--- Result of the QUBO-Ising process ---")
         print(f"Valid route: {valid}, Cost: {self.best_distance:.2f}, Time: {execution_time:.4f}s")
         
         return self.best_route, self.best_distance, execution_time
     
-    def visualize_solution(self, coordinates, title="TSP Solution using QUBO→Ising"):
+    def visualize_solution(self, coordinates, title="TSP Solution using QUBO-Ising"):
         """
         Visualize the TSP solution.
         
@@ -239,13 +239,13 @@ def create_ising_tsp(distances, penalty=None):
     return solver.create_ising_from_qubo(Q)
 
 def solve_tsp_qubo_to_ising(distances, num_reads=1000, sweeps=1000):
-    # solve the TSP with the QUBO→Ising workflow
+    # solve the TSP with the QUBO-Ising workflow
     solver = QUBOToIsingTSPSolver(distances)
     return solver.solve_with_qubo_to_ising(num_reads, sweeps)
 
 def qubo_to_ising_workflow(distances, coordinates=None, num_reads=1000, sweeps=1000):
     """
-    Implement the QUBO→Ising workflow for TSP.
+    Implement the QUBO-Ising workflow for TSP.
     
     Args:
         distances: Distance matrix
@@ -296,7 +296,7 @@ def measure_execution_time(distances, coordinates=None, method='qubo_to_ising', 
     return route, distance, execution_time, visualization
 
 if __name__ == "__main__":
-    print("Example of TSP solved with the QUBO→Ising workflow")
+    print("Example of TSP solved with the QUBO-Ising workflow")
     
     # Create a small example
     distances = np.array([

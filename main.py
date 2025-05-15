@@ -192,7 +192,7 @@ def main():
         st.subheader("Select Algorithm")
         algorithm = st.selectbox(
             "Algorithm",
-            ["Genetic Algorithm", "Nearest Neighbor", "Brute Force", "QUBO→Ising"]
+            ["Genetic Algorithm", "Nearest Neighbor", "Brute Force", "QUBO-Ising"]
         )
         
         # Sample Increase
@@ -233,7 +233,7 @@ def main():
             
             params = {}
             
-        elif algorithm == "QUBO→Ising":
+        elif algorithm == "QUBO-Ising":
             st.subheader("Quantum Parameters")
             num_reads = st.slider("Number of Reads", 10, 5000, 1000)
             sweeps = st.slider("Number of Sweeps", 10, 5000, 1000)
@@ -366,8 +366,8 @@ def main():
                         "params": params
                     }
                 
-                elif algorithm == "QUBO→Ising":
-                    status_text.text("Running QUBO→Ising workflow...")
+                elif algorithm == "QUBO-Ising":
+                    status_text.text("Running QUBO Ising workflow...")
                     result = qubo_to_ising_workflow(
                         distance_matrix, coordinates=points, **params
                     )
@@ -386,13 +386,13 @@ def main():
                 progress_bar.progress(100)
                 
                 # Update with the correct execution time based on the algorithm
-                if algorithm == "QUBO→Ising":
+                if algorithm == "QUBO-Ising":
                     execution_time = result['time']
                 
                 status_text.text(f"Algorithm completed in {execution_time:.4f} seconds!")
                 
                 # Show success message with the appropriate distance
-                if algorithm == "QUBO→Ising":
+                if algorithm == "QUBO-Ising":
                     st.success(f"Found route with distance: {result['cost']:.2f}")
                 else:
                     st.success(f"Found route with distance: {distance:.2f}")
